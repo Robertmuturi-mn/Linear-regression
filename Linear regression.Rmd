@@ -1,0 +1,144 @@
+---
+title: "linear regression"
+author: "Muturi"
+date: "2024-04-04"
+output: html_document
+---
+## Linear regression
+Generally linear regression means finding the line of the best fit,
+it is based on the following assumptions:
+
+1.Linear Relationship: The core premise of multiple linear regression is the existence of a linear relationship between the dependent (outcome) variable and the independent variables.
+
+2.No Multicollinearity: It is essential that the independent variables are not too highly correlated with each other, a condition known as multicollinearity.
+
+3.Homoscedasticity: The variance of error terms (residuals) should be consistent across all levels of the independent variables. A scatterplot of residuals versus predicted values should not display any discernible pattern, such as a cone-shaped distribution, which would indicate heteroscedasticity.
+
+4.Normality: The residuals of the model are normally distributed.
+
+
+
+```{r,echo=FALSE}
+library(tidyverse)
+library(janitor)
+# read data
+ideal_data <- read_csv("ideal3a.csv")%>%
+  clean_names()%>%
+  mutate(calf_sex=recode(calf_sex, "1"="Male", "2"="Female"))
+# Create a scatterplot of adwg vs. recruit_weight(test for linear relationship)
+plot(x = ideal_data$recruit_weight, y = ideal_data$adwg,
+     xlab = "Recruit Weight", ylab = "Average Daily Weight Gain",
+     main = "Scatterplot of adwg vs. recruit_weight",
+     pch = 16, col = "blue")
+
+
+
+
+
+
+
+```
+
+```{r}
+
+ideal_lm_model<-lm(adwg~recruit_weight, data = ideal_data)
+```
+# Create the fitted value vs. residual plot(test for homoscedasticity)
+Pattern Detection: Patterns that indicate heteroscedasticity (violation of homoscedasticity assumption) may include:
+
+-A cone-shaped distribution: The spread of residuals widens or narrows systematically as the predicted values increase or decrease, resulting in a funnel or cone-shaped pattern.
+
+-Fanning or wedge-shaped patterns: The spread of residuals increases or decreases as the predicted values change, resulting in a wedge or fan-shaped pattern.
+
+-Other discernible trends or patterns in the scatterplot that suggest a changing variance of residuals across the range of predicted values.
+
+Suppose you wanted to explain student test scores using the amount of time each student spent studying. In this case, the test scores would be the dependent variable and the time spent studying would be the predictor variable.
+surprisingly, a plot of the error term data may show a large amount of study time corresponded very closely with high test scores but that low study time test scores varied widely and even included some very high scores.
+This would indicate that the variance of scores was not well-explained simply by the one predictor variable of the amount of time studying. In this case, some other factor is probably at work.
+Further investigation may reveal other factors that impacted scores, such as:
+-Some students had seen the answers to the test ahead of time
+-Students who had previously taken a similar test didn't need to study for this one.
+-Students had levels of test-taking skill independent of their study time.
+
+```{r}
+
+plot(x = fitted(ideal_lm_model), y = resid(ideal_lm_model),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Fitted Values vs. Residuals Plot",
+     pch = 16, col = "blue")
+abline(h = 0, col = "red", lty = 2)
+```
+
+```{r}
+summary(ideal_lm_model)
+```
+p-value is small, it indicates strong evidence against the null hypothesis. In this case, the p-value is much smaller than the commonly used significance level of 0.05 (or 5%). Therefore, we have strong evidence to reject the null hypothesis that recruit weight has no influence on growth rate
+
+# Find estimated coefficients obtained from the linear regression model
+```{r}
+exp(cbind(cc= coef(ideal_lm_model), confint(ideal_lm_model)))
+
+```
+The model indicates:
+There is a significant positive relationship between recruit weight and Average Daily Weight Gain. As recruit weight increases, the average daily weight gain of calves also tends to increase(CC=1.005, 95% CI=1.003,1.006).
+
+The coefficient of 1.005 in this context means that for every one-unit increase in the weight of calves during recruitment, the growth rate increases by a factor of approximately 1.005 times.
+
+# Multiple linear regression
+We’ll use the marketing data set [datarium package], which contains the impact of the amount of money spent on three advertising medias (youtube, facebook and newspaper) on sales.
+```{r}
+library(tidyverse)
+data("marketing", package = "datarium")
+head(marketing, 4)
+```
+# model
+```{r}
+model <- lm(sales ~ youtube + facebook+ newspaper ,data = marketing)
+
+summary(model)
+
+```
+**Interpretation**
+
+p-value:
+
+1. **YouTube coefficient**:
+   - The p-value associated with the YouTube coefficient is <2e-16, which is essentially zero. This suggests strong evidence against the null hypothesis, indicating that the coefficient for YouTube is significantly different from zero. Therefore, there is a significant relationship between the YouTube advertising budget and sales.
+
+2. **Facebook coefficient**:
+   - The p-value associated with the Facebook coefficient is <2e-16, which is essentially zero. This suggests strong evidence against the null hypothesis, indicating that the coefficient for Facebook is significantly different from zero. Therefore, there is a significant relationship between the Facebook advertising budget and sales.
+
+3. **Newspaper coefficient**:
+   - The p-value associated with the newspaper coefficient is 0.86, which is much greater than the typical significance level of 0.05. This suggests that there is not enough evidence to reject the null hypothesis. Therefore, we fail to find a significant relationship between the newspaper advertising budget and sales based on this model.
+
+R-squared:
+The multiple R-squared value of 0.8972 indicates that approximately 89.72% of the variability in sales can be explained by the independent variables (YouTube, Facebook, and newspaper advertising budgets) in the model.
+
+```{r}
+exp(cbind(cc= coef(model), confint(model)))
+```
+The values you provided are the estimated coefficients (cc) along with their corresponding 95% confidence intervals for each predictor variable in our linear regression model. Here's how to interpret them:
+
+1. **YouTube coefficient**:
+   - The estimated coefficient for the YouTube advertising budget is approximately 1.0468. This suggests that for each unit increase in the YouTube advertising budget, the estimated sales increase by approximately 1.0468 units.
+
+   - The 95% confidence interval for the YouTube coefficient is [1.0439522, 1.049712]. This indicates that we are 95% confident that the true value of the coefficient lies within this range.
+
+2. **Facebook coefficient**:
+   - The estimated coefficient for the Facebook advertising budget is approximately 1.2075. This suggests that for each unit increase in the Facebook advertising budget, the estimated sales increase by approximately 1.2075 units.
+
+   - The 95% confidence interval for the Facebook coefficient is [1.1871405, 1.228154]. This indicates that we are 95% confident that the true value of the coefficient lies within this range.
+
+3. **Newspaper coefficient**:
+   - The estimated coefficient for the newspaper advertising budget is approximately 0.9990. This suggests that there is almost no change in sales for each unit increase in the newspaper advertising budget.
+
+   - The 95% confidence interval for the newspaper coefficient is [0.9874633, 1.010597]. This indicates that we are 95% confident that the true value of the coefficient lies within this range. Since the interval includes 1, it suggests that the effect of the newspaper advertising budget on sales is not statistically significant at the 5% significance level. 
+
+
+```{r}
+
+```
+
+
+
+
